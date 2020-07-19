@@ -8,9 +8,8 @@
 #include "mpu6050.h"
 
 
-void config_led_pin(){
+void onboard_led_pin_init(){
     uint64_t pin_mask = 0x00000000;
-    // select pin 2
     uint64_t pin2 = (pin_mask) | (1 << 2);
     gpio_config_t conf;
     conf.pin_bit_mask = pin2;
@@ -21,23 +20,22 @@ void config_led_pin(){
     gpio_config(&conf);
 }
 
+void blinky(){
+    const TickType_t xDelay1000ms = pdMS_TO_TICKS(1000);
+    vTaskDelay(xDelay1000ms);
+    gpio_set_level(2, 0);
+    vTaskDelay(xDelay1000ms);
+    gpio_set_level(2, 1);
+}
 
 
 void app_main(){
-
-    config_led_pin();
+    
+    onboard_led_pin_init();
     i2c_init();
-    const TickType_t xDelay1000ms = pdMS_TO_TICKS(1000);
-    uint8_t data;
-    uint8_t data_len = 1;
-    //gpio_reset_pin(2);
-    //gpio_set_direction(2, GPIO_MODE_OUTPUT);
+
     while(1){
-        vTaskDelay(xDelay1000ms);
-        gpio_set_level(2, 0);
-        vTaskDelay(xDelay1000ms);
-        gpio_set_level(2, 1);
-        check_who_am_i(&data, data_len);
-        printf("%x \n", data);
+        blinky();
+        printf("%x \n", mpu6050_who_am_i());
     }
 }
