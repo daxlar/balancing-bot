@@ -5,6 +5,7 @@
 #include "driver/i2c.h"
 #include "driver/gpio.h"
 #include "sdkconfig.h"
+#include "mpu6050.h"
 
 
 void config_led_pin(){
@@ -29,15 +30,11 @@ void app_main(){
 
     //gpio_reset_pin(2);
     //gpio_set_direction(2, GPIO_MODE_OUTPUT);
-
-
     while(1){
         vTaskDelay(xDelay1000ms);
         gpio_set_level(2, 0);
         vTaskDelay(xDelay1000ms);
         gpio_set_level(2, 1);
-        
-        
-        
+        print_hello();
     }
 }
