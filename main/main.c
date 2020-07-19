@@ -26,8 +26,10 @@ void config_led_pin(){
 void app_main(){
 
     config_led_pin();
+    i2c_init();
     const TickType_t xDelay1000ms = pdMS_TO_TICKS(1000);
-
+    uint8_t data;
+    uint8_t data_len = 1;
     //gpio_reset_pin(2);
     //gpio_set_direction(2, GPIO_MODE_OUTPUT);
     while(1){
@@ -35,6 +37,7 @@ void app_main(){
         gpio_set_level(2, 0);
         vTaskDelay(xDelay1000ms);
         gpio_set_level(2, 1);
-        print_hello();
+        check_who_am_i(&data, data_len);
+        printf("%x \n", data);
     }
 }
