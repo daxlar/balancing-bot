@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# esp32 build system 
+build/*
+c_cpp_properties.json
