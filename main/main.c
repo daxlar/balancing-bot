@@ -21,7 +21,7 @@ void onboard_led_pin_init(){
 }
 
 void blinky(){
-    const TickType_t xDelay1000ms = pdMS_TO_TICKS(1000);
+    const TickType_t xDelay1000ms = pdMS_TO_TICKS(100);
     vTaskDelay(xDelay1000ms);
     gpio_set_level(2, 0);
     vTaskDelay(xDelay1000ms);
@@ -30,12 +30,19 @@ void blinky(){
 
 
 void app_main(){
-    
+
     onboard_led_pin_init();
     i2c_init();
+    mpu6050_init();
+
+    if(mpu6050_who_am_i() != 0x68){
+        printf("invalid reading, check configuration");
+    }
 
     while(1){
-        blinky();
-        printf("%x \n", mpu6050_who_am_i());
+        //blinky();
+        printf("%4.3f, %4.3f, %4.3f \n", mpu6050_read_x_accl()
+                                       , mpu6050_read_y_accl()
+                                       , mpu6050_read_z_accl());                
     }
 }
