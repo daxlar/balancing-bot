@@ -2,9 +2,7 @@
 #include "freertos/FreeRTOSConfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/i2c.h"
 #include "driver/gpio.h"
-#include "sdkconfig.h"
 #include "mpu6050.h"
 
 
