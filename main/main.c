@@ -6,10 +6,20 @@
 #include "mpu6050.h"
 
 #include "driver/mcpwm.h"
+#include "driver/ledc.h"
 
-#define SERVO_MIN_PULSEWIDTH 1000 //Minimum pulse width in microsecond
-#define SERVO_MAX_PULSEWIDTH 2000 //Maximum pulse width in microsecond
-#define SERVO_MAX_DEGREE 90 //Maximum angle in degree upto which servo can rotate
+#define SERVO_MIN_PULSEWIDTH 500 //Minimum pulse width in microsecond
+#define SERVO_MAX_PULSEWIDTH 2500 //Maximum pulse width in microsecond
+#define SERVO_MAX_DEGREE 180 //Maximum angle in degree upto which servo can rotate
+#define SERVO_PERIOD 20000.0
+#define MAX_TIMER 32767
+
+
+#define SERVO_PERIOD 20000.0
+#define MAX_TIMER 32767
+
+//onst static float SERVO_MAX_DUTY = (float)SERVO_MAX_PULSEWIDTH/SERVO_PERIOD;
+const static float SERVO_MIN_DUTY = (float)SERVO_MIN_PULSEWIDTH/SERVO_PERIOD;
 
 
 void onboard_led_pin_init(){
@@ -49,6 +59,16 @@ static uint32_t servo_per_degree_init(uint32_t degree_of_rotation)
     return cal_pulsewidth;
 }
 
+uint32_t calculate_duty(uint32_t angle)
+{
+    float duty = SERVO_MIN_DUTY + (((SERVO_MAX_PULSEWIDTH - SERVO_MIN_PULSEWIDTH) * (angle)) / (SERVO_MAX_DEGREE))/SERVO_PERIOD;
+    
+    duty = (float)MAX_TIMER*duty;
+    uint32_t duty_int = (uint32_t)duty;
+    
+    return duty_int;
+}
+
 
 void app_main(){
 
@@ -68,8 +88,10 @@ void app_main(){
     }
     */
 
-
+    int32_t angle, count;
+    /*
     mcpwm0_gpio_init();
+    mcpwm1_gpio_init();
     uint32_t angle, count;
     mcpwm_config_t pwm_config;
     pwm_config.frequency = 50;    //frequency = 50Hz, i.e. for every servo motor time period should be 20ms
@@ -78,13 +100,62 @@ void app_main(){
     pwm_config.counter_mode = MCPWM_UP_COUNTER;
     pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config);    //Configure PWM0A & PWM0B with above settings
+    mcpwm_init(MCPWM_UNIT_1, MCPWM_TIMER_1, &pwm_config);
+    */
+
+    ledc_timer_config_t ledc_timer;
+    ledc_timer.duty_resolution = LEDC_TIMER_15_BIT;
+    ledc_timer.freq_hz = 50;
+    ledc_timer.speed_mode = LEDC_LOW_SPEED_MODE;
+    ledc_timer.timer_num = LEDC_TIMER_0;
+    ledc_timer.clk_cfg = LEDC_USE_APB_CLK;
+    ledc_timer_config(&ledc_timer);
+
+    ledc_channel_config_t ledc_channel;
+    ledc_channel.channel = LEDC_CHANNEL_0;
+    ledc_channel.duty = 0;
+    ledc_channel.gpio_num = 18;
+    ledc_channel.intr_type = LEDC_INTR_DISABLE;
+    ledc_channel.speed_mode = LEDC_LOW_SPEED_MODE;
+    ledc_channel.timer_sel = LEDC_TIMER_0;
+    ledc_channel_config(&ledc_channel);
+
+    
+    ledc_timer_config_t ledc_timer1;
+    ledc_timer1.duty_resolution = LEDC_TIMER_15_BIT;
+    ledc_timer1.freq_hz = 50;
+    ledc_timer1.speed_mode = LEDC_LOW_SPEED_MODE;
+    ledc_timer1.timer_num = LEDC_TIMER_1;
+    ledc_timer1.clk_cfg = LEDC_USE_APB_CLK;
+    ledc_timer_config(&ledc_timer1);
+    
+
+    ledc_channel_config_t ledc_channel1;
+    ledc_channel1.channel = LEDC_CHANNEL_1;
+    ledc_channel1.duty = 0;
+    ledc_channel1.gpio_num = 19;
+    ledc_channel1.intr_type = LEDC_INTR_DISABLE;
+    ledc_channel1.speed_mode = LEDC_LOW_SPEED_MODE;
+    ledc_channel1.timer_sel = LEDC_TIMER_1;
+    ledc_channel_config(&ledc_channel1);
+
+    printf("done");
+
     while (1) {
         for (count = 0; count < SERVO_MAX_DEGREE; count++) {
-            printf("Angle of rotation: %d\n", count);
-            angle = servo_per_degree_init(count);
-            printf("pulse width: %dus\n", angle);
+            
+            //angle = servo_per_degree_init(count);
+            /*
             mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, angle);
-            vTaskDelay(10);     //Add delay, since it takes time for servo to rotate, generally 100ms/60degree rotation at 5V
+            mcpwm_set_duty_in_us(MCPWM_UNIT_1, MCPWM_TIMER_1, MCPWM_OPR_A, angle);
+            */
+            angle = calculate_duty(count);
+            ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, angle);
+            ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+            ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, angle);
+            ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
+
+            vTaskDelay(50);     //Add delay, since it takes time for servo to rotate, generally 100ms/60degree rotation at 5V
         }
     }
 }
