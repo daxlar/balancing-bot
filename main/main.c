@@ -7,6 +7,8 @@
 
 #include "driver/mcpwm.h"
 #include "driver/ledc.h"
+#include "driver/periph_ctrl.h"
+#include "soc/ledc_reg.h"
 
 #define SERVO_MIN_PULSEWIDTH 500 //Minimum pulse width in microsecond
 #define SERVO_MAX_PULSEWIDTH 2500 //Maximum pulse width in microsecond
@@ -40,16 +42,6 @@ void blinky(){
     gpio_set_level(2, 0);
     vTaskDelay(xDelay1000ms);
     gpio_set_level(2, 1);
-}
-
-
-
-void mcpwm0_gpio_init(){
-    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0A, 18);
-}
-
-void mcpwm1_gpio_init(){
-    mcpwm_gpio_init(MCPWM_UNIT_1, MCPWM1A, 19);
 }
 
 static uint32_t servo_per_degree_init(uint32_t degree_of_rotation)
@@ -87,21 +79,11 @@ void app_main(){
                                        , mpu6050_read_z_accl());                
     }
     */
-
+    const TickType_t xDelay1000ms = pdMS_TO_TICKS(10);
     int32_t angle, count;
-    /*
-    mcpwm0_gpio_init();
-    mcpwm1_gpio_init();
-    uint32_t angle, count;
-    mcpwm_config_t pwm_config;
-    pwm_config.frequency = 50;    //frequency = 50Hz, i.e. for every servo motor time period should be 20ms
-    pwm_config.cmpr_a = 0;    //duty cycle of PWMxA = 0
-    pwm_config.cmpr_b = 0;    //duty cycle of PWMxb = 0
-    pwm_config.counter_mode = MCPWM_UP_COUNTER;
-    pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
-    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config);    //Configure PWM0A & PWM0B with above settings
-    mcpwm_init(MCPWM_UNIT_1, MCPWM_TIMER_1, &pwm_config);
-    */
+    
+    // not really sure why this line is needed
+    periph_module_enable(PERIPH_LEDC_MODULE);
 
     ledc_timer_config_t ledc_timer;
     ledc_timer.duty_resolution = LEDC_TIMER_15_BIT;
@@ -139,8 +121,6 @@ void app_main(){
     ledc_channel1.timer_sel = LEDC_TIMER_1;
     ledc_channel_config(&ledc_channel1);
 
-    printf("done");
-
     while (1) {
         for (count = 0; count < SERVO_MAX_DEGREE; count++) {
             
@@ -155,7 +135,7 @@ void app_main(){
             ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, angle);
             ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
 
-            vTaskDelay(50);     //Add delay, since it takes time for servo to rotate, generally 100ms/60degree rotation at 5V
+            vTaskDelay(xDelay1000ms);     //Add delay, since it takes time for servo to rotate, generally 100ms/60degree rotation at 5V
         }
     }
 }
